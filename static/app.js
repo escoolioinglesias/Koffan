@@ -480,26 +480,36 @@ function shoppingList() {
                 if (this._isRefreshing) return;
                 this._isRefreshing = true;
 
+                const overlay = document.getElementById('refresh-overlay');
                 const sectionsList = document.getElementById('sections-list');
+
                 if (sectionsList) {
-                    // Fade out slightly before swap
-                    sectionsList.style.opacity = '0.6';
-                    sectionsList.style.transition = 'opacity 0.15s ease-out';
+                    // Show overlay
+                    if (overlay) {
+                        overlay.classList.add('active');
+                    }
 
                     htmx.ajax('GET', '/', {
                         target: '#sections-list',
                         swap: 'innerHTML',
                         select: '#sections-list > *'
                     }).then(() => {
-                        // Fade back in after swap
-                        requestAnimationFrame(() => {
-                            sectionsList.style.opacity = '1';
-                            setTimeout(() => {
+                        // Small delay then fade out overlay
+                        setTimeout(() => {
+                            if (overlay) {
+                                overlay.classList.add('fade-out');
+                                setTimeout(() => {
+                                    overlay.classList.remove('active', 'fade-out');
+                                    this._isRefreshing = false;
+                                }, 250);
+                            } else {
                                 this._isRefreshing = false;
-                            }, 150);
-                        });
+                            }
+                        }, 50);
                     }).catch(() => {
-                        sectionsList.style.opacity = '1';
+                        if (overlay) {
+                            overlay.classList.remove('active', 'fade-out');
+                        }
                         this._isRefreshing = false;
                     });
                 } else {
