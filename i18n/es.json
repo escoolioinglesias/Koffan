@@ -72,6 +72,8 @@
     "delete_section": "¿Eliminar sección '{{name}}'?"
   },
   "offline": {
-    "banner": "Modo sin conexión - los cambios se sincronizarán"
+    "title": "Modo sin conexión",
+    "message": "Estás sin conexión. Todos los cambios se sincronizarán automáticamente cuando se restablezca la conexión.",
+    "hint": "Aún puedes agregar y editar productos"
   }
 }

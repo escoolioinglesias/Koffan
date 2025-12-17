@@ -17,6 +17,7 @@ function shoppingList() {
         showAddItem: false,
         showEditModal: false,
         showSettings: false,
+        showOfflineModal: false,
 
         // Section management
         selectMode: false,
@@ -902,6 +903,127 @@ document.addEventListener('DOMContentLoaded', function() {
     // Track existing items before swap to animate only new ones
     let existingItemIds = new Set();
 
+    // Counter for temporary offline IDs
+    let offlineItemCounter = Date.now();
+
+    // Intercept HTMX requests when offline
+    document.body.addEventListener('htmx:beforeRequest', function(event) {
+        if (navigator.onLine) return; // Online - let HTMX handle it
+
+        const path = event.detail.requestConfig?.path || '';
+        const verb = event.detail.requestConfig?.verb?.toUpperCase() || 'GET';
+
+        // Handle POST /items (add item) offline
+        if (verb === 'POST' && path === '/items') {
+            event.preventDefault();
+
+            const form = event.detail.elt;
+            const formData = new FormData(form);
+            const sectionId = formData.get('section_id');
+            const name = formData.get('name');
+            const description = formData.get('description') || '';
+
+            if (!sectionId || !name) return;
+
+            // Generate temporary ID
+            const tempId = 'offline-' + (++offlineItemCounter);
+
+            // Create optimistic item HTML
+            const itemHtml = createOfflineItemHtml(tempId, name, description, sectionId);
+
+            // Find the section and add item to it
+            const sectionEl = document.querySelector(`[id^="section-${sectionId}"]`);
+            if (sectionEl) {
+                const itemsContainer = sectionEl.querySelector('.divide-y');
+                if (itemsContainer) {
+                    // Insert at the beginning (newest first based on sort_order)
+                    itemsContainer.insertAdjacentHTML('afterbegin', itemHtml);
+
+                    // Add animation
+                    const newItem = document.getElementById(`item-${tempId}`);
+                    if (newItem) {
+                        newItem.classList.add('item-enter');
+                        setTimeout(() => newItem.classList.remove('item-enter'), 300);
+                    }
+                }
+            }
+
+            // Queue action for sync
+            window.offlineStorage.queueAction({
+                type: 'create_item',
+                url: '/items',
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `section_id=${sectionId}&name=${encodeURIComponent(name)}&description=${encodeURIComponent(description)}`,
+                tempId: tempId
+            }).then(() => {
+                console.log('[Offline] Item queued:', name);
+            });
+
+            // Clear form
+            if (typeof clearFormKeepSection === 'function') {
+                clearFormKeepSection(form);
+            } else {
+                form.reset();
+            }
+
+            // Update stats optimistically
+            const alpineData = Alpine.$data(document.querySelector('[x-data="shoppingList()"]'));
+            if (alpineData) {
+                alpineData.stats.total++;
+            }
+
+            return false;
+        }
+
+        // Handle POST /items/:id/toggle offline
+        if (verb === 'POST' && path.match(/\/items\/\d+\/toggle/)) {
+            event.preventDefault();
+
+            const itemId = path.match(/\/items\/(\d+)\/toggle/)[1];
+
+            // Queue for sync
+            window.offlineStorage.queueAction({
+                type: 'toggle_item',
+                url: path,
+                method: 'POST'
+            });
+
+            // Optimistic UI is already handled by existing code
+            console.log('[Offline] Toggle queued:', itemId);
+            return false;
+        }
+
+        // Handle DELETE /items/:id offline
+        if (verb === 'DELETE' && path.match(/\/items\/\d+$/)) {
+            event.preventDefault();
+
+            const itemId = path.match(/\/items\/(\d+)$/)[1];
+            const itemEl = document.getElementById(`item-${itemId}`);
+
+            if (itemEl) {
+                itemEl.classList.add('item-exit');
+                setTimeout(() => itemEl.remove(), 200);
+            }
+
+            // Queue for sync
+            window.offlineStorage.queueAction({
+                type: 'delete_item',
+                url: path,
+                method: 'DELETE'
+            });
+
+            // Update stats optimistically
+            const alpineData = Alpine.$data(document.querySelector('[x-data="shoppingList()"]'));
+            if (alpineData) {
+                alpineData.stats.total = Math.max(0, alpineData.stats.total - 1);
+            }
+
+            console.log('[Offline] Delete queued:', itemId);
+            return false;
+        }
+    });
+
     document.body.addEventListener('htmx:responseError', function(event) {
         console.error('HTMX error:', event.detail);
         if (event.detail.xhr.status === 401) {
@@ -939,6 +1061,38 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
+// Create HTML for offline item (simplified version without all actions)
+function createOfflineItemHtml(id, name, description, sectionId) {
+    const descHtml = description
+        ? `<p class="text-xs text-stone-400 truncate mt-0.5">${escapeHtml(description)}</p>`
+        : '';
+
+    return `
+<div id="item-${id}" class="px-4 py-3 flex items-center gap-3 hover:bg-stone-50 transition-all group bg-amber-50/30 border-l-2 border-amber-400">
+    <!-- Checkbox (disabled offline) -->
+    <div class="flex-shrink-0 w-5 h-5 rounded-full border-2 border-stone-200 bg-stone-50"></div>
+
+    <!-- Content -->
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+            <span class="text-amber-500 text-xs" title="Oczekuje na synchronizację">⏳</span>
+            <p class="text-sm text-stone-700 truncate">${escapeHtml(name)}</p>
+        </div>
+        ${descHtml}
+    </div>
+
+    <!-- Offline indicator -->
+    <span class="text-xs text-amber-500 font-medium">offline</span>
+</div>`;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 // Global function for uncertain toggle (called from onclick)
 window.toggleUncertain = async function(itemId) {

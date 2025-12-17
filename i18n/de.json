@@ -72,6 +72,8 @@
     "delete_section": "Abteilung '{{name}}' löschen?"
   },
   "offline": {
-    "banner": "Offline-Modus - Änderungen werden synchronisiert"
+    "title": "Offline-Modus",
+    "message": "Sie sind offline. Alle Änderungen werden automatisch synchronisiert, wenn die Verbindung wiederhergestellt ist.",
+    "hint": "Sie können weiterhin Produkte hinzufügen und bearbeiten"
   }
 }

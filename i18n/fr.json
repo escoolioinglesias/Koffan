@@ -72,6 +72,8 @@
     "delete_section": "Supprimer le rayon '{{name}}' ?"
   },
   "offline": {
-    "banner": "Mode hors ligne - les modifications seront synchronisées"
+    "title": "Mode hors ligne",
+    "message": "Vous êtes hors ligne. Toutes les modifications seront automatiquement synchronisées lorsque la connexion sera rétablie.",
+    "hint": "Vous pouvez toujours ajouter et modifier des produits"
   }
 }

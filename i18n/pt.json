@@ -72,6 +72,8 @@
     "delete_section": "Eliminar secção '{{name}}'?"
   },
   "offline": {
-    "banner": "Modo offline - as alterações serão sincronizadas"
+    "title": "Modo offline",
+    "message": "Você está offline. Todas as alterações serão sincronizadas automaticamente quando a conexão for restaurada.",
+    "hint": "Você ainda pode adicionar e editar produtos"
   }
 }

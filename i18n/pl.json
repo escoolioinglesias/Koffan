@@ -72,6 +72,8 @@
     "delete_section": "Usunąć sekcję '{{name}}'?"
   },
   "offline": {
-    "banner": "Tryb offline - zmiany zostaną zsynchronizowane"
+    "title": "Tryb offline",
+    "message": "Jesteś w trybie offline. Wszystkie zmiany zostaną automatycznie zsynchronizowane po przywróceniu połączenia.",
+    "hint": "Możesz nadal dodawać i edytować produkty"
   }
 }
