@@ -1521,41 +1521,27 @@ function escapeHtml(text) {
 window.updateSectionAfterDelete = function(itemElement) {
     // Find parent section
     const section = itemElement.closest('[data-section-id]');
-    if (!section) {
-        console.warn('[updateSectionAfterDelete] Section not found');
-        return;
-    }
+    if (!section) return;
 
-    // Parse current counter (format: "completed/total")
-    const counter = section.querySelector('.section-counter');
-    if (!counter) {
-        console.warn('[updateSectionAfterDelete] Counter not found');
-        return;
-    }
+    // Count remaining items (active + completed)
+    const activeItems = section.querySelectorAll('.active-items > [id^="item-"]').length;
+    const completedContainer = section.querySelector('[x-show="open"]');
+    const completedItems = completedContainer ? completedContainer.querySelectorAll('[id^="item-"]').length : 0;
 
-    const text = counter.textContent;
-    const match = text.match(/(\d+)\/(\d+)/);
-    if (!match) {
-        console.warn('[updateSectionAfterDelete] Counter format invalid:', text);
-        return;
-    }
-
-    let completed = parseInt(match[1]);
-    let total = parseInt(match[2]);
-
-    // Check if deleted item is completed (not in .active-items container)
-    const isCompletedItem = itemElement.closest('.active-items') === null;
-
-    if (isCompletedItem) {
-        completed = Math.max(0, completed - 1);
-    }
-    total = Math.max(0, total - 1);
+    // Subtract 1 for the item being deleted (it's still in DOM at this point)
+    const isActiveItem = itemElement.closest('.active-items') !== null;
+    const newActiveCount = isActiveItem ? activeItems - 1 : activeItems;
+    const newCompletedCount = isActiveItem ? completedItems : completedItems - 1;
+    const newTotal = newActiveCount + newCompletedCount;
 
     // Update counter
-    counter.textContent = `${completed}/${total}`;
+    const counter = section.querySelector('.section-counter');
+    if (counter) {
+        counter.textContent = `${newCompletedCount}/${newTotal}`;
+    }
 
     // Hide section if empty
-    if (total === 0) {
+    if (newTotal === 0) {
         section.classList.add('hidden');
     }
 };
