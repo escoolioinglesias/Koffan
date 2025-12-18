@@ -61,8 +61,18 @@ func createTables() {
 		expires_at INTEGER NOT NULL
 	);
 
+	CREATE TABLE IF NOT EXISTS item_history (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL COLLATE NOCASE,
+		last_section_id INTEGER,
+		usage_count INTEGER DEFAULT 1,
+		last_used_at INTEGER DEFAULT (strftime('%s', 'now')),
+		UNIQUE(name COLLATE NOCASE)
+	);
+
 	CREATE INDEX IF NOT EXISTS idx_items_section ON items(section_id, sort_order);
 	CREATE INDEX IF NOT EXISTS idx_sections_order ON sections(sort_order);
+	CREATE INDEX IF NOT EXISTS idx_item_history_name ON item_history(name COLLATE NOCASE);
 	`
 
 	_, err := DB.Exec(schema)

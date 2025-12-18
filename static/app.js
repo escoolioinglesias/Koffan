@@ -90,6 +90,13 @@ function shoppingList() {
         editItemName: '',
         editItemDescription: '',
 
+        // Auto-completion
+        suggestions: [],
+        showSuggestions: false,
+        selectedSuggestionIndex: -1,
+        itemNameInput: '',
+        _suggestionTimer: null,
+
         // Track pending local actions to avoid WebSocket race conditions
         pendingLocalActions: {},
         localActionTimeout: 1000, // ms to ignore WebSocket updates after local action
@@ -104,6 +111,7 @@ function shoppingList() {
             this.initWebSocket();
             this.initCompletedSectionsStore();
             this.initLocalActionTracking();
+            this.cacheSuggestions();
 
             // Listen for mobile action modal
             this.$el.addEventListener('open-mobile-action', (e) => {
@@ -877,6 +885,133 @@ function shoppingList() {
                 console.error('[App] Failed to delete completed items:', error);
                 window.Toast.show('Error deleting items', 'warning');
             }
+        },
+
+        // Auto-completion methods
+        async cacheSuggestions() {
+            // Cache suggestions for offline use (run in background)
+            if (this.isOnline) {
+                try {
+                    const response = await fetch('/api/suggestions?limit=100');
+                    if (response.ok) {
+                        const suggestions = await response.json();
+                        await window.offlineStorage.saveSuggestions(suggestions);
+                    }
+                } catch (error) {
+                    console.error('[App] Failed to cache suggestions:', error);
+                }
+            }
+        },
+
+        async fetchSuggestions(query) {
+            // Clear previous timer
+            if (this._suggestionTimer) {
+                clearTimeout(this._suggestionTimer);
+            }
+
+            // Don't search for very short queries
+            if (!query || query.length < 2) {
+                this.suggestions = [];
+                this.showSuggestions = false;
+                return;
+            }
+
+            // Debounce 150ms
+            this._suggestionTimer = setTimeout(async () => {
+                try {
+                    if (this.isOnline) {
+                        const response = await fetch(`/api/suggestions?q=${encodeURIComponent(query)}&limit=8`);
+                        if (response.ok) {
+                            this.suggestions = await response.json();
+                        }
+                    } else {
+                        // Offline: search in cached suggestions
+                        this.suggestions = await window.offlineStorage.getSuggestions(query);
+                    }
+                    this.showSuggestions = this.suggestions && this.suggestions.length > 0;
+                    this.selectedSuggestionIndex = -1;
+                } catch (error) {
+                    console.error('[App] Failed to fetch suggestions:', error);
+                    this.suggestions = [];
+                    this.showSuggestions = false;
+                }
+            }, 150);
+        },
+
+        selectSuggestion(suggestion, inputRef = null, selectRef = null) {
+            // Fill the input with suggestion name
+            this.itemNameInput = suggestion.name;
+
+            // Update the input - prefer passed ref, fallback to selectors
+            if (inputRef) {
+                inputRef.value = suggestion.name;
+            } else {
+                const desktopInput = document.getElementById('item-name-input');
+                if (desktopInput) {
+                    desktopInput.value = suggestion.name;
+                }
+                const mobileInput = this.$refs.itemNameInput;
+                if (mobileInput) {
+                    mobileInput.value = suggestion.name;
+                }
+            }
+
+            // Auto-select the last section used for this item
+            if (suggestion.last_section_id) {
+                if (selectRef) {
+                    selectRef.value = suggestion.last_section_id;
+                } else {
+                    const desktopSelect = document.querySelector('#add-item-form select[name="section_id"]');
+                    if (desktopSelect) {
+                        desktopSelect.value = suggestion.last_section_id;
+                    }
+                    const mobileSelect = this.$refs.mobileSectionSelect;
+                    if (mobileSelect) {
+                        mobileSelect.value = suggestion.last_section_id;
+                    }
+                }
+            }
+
+            this.showSuggestions = false;
+            this.suggestions = [];
+            this.selectedSuggestionIndex = -1;
+        },
+
+        handleSuggestionKeydown(event) {
+            if (!this.showSuggestions || this.suggestions.length === 0) {
+                return;
+            }
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    this.selectedSuggestionIndex = Math.min(
+                        this.selectedSuggestionIndex + 1,
+                        this.suggestions.length - 1
+                    );
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, -1);
+                    break;
+                case 'Enter':
+                    if (this.selectedSuggestionIndex >= 0) {
+                        event.preventDefault();
+                        this.selectSuggestion(this.suggestions[this.selectedSuggestionIndex]);
+                    }
+                    break;
+                case 'Escape':
+                    this.showSuggestions = false;
+                    this.selectedSuggestionIndex = -1;
+                    break;
+            }
+        },
+
+        hideSuggestionsDelayed() {
+            // Delay to allow click on suggestion
+            setTimeout(() => {
+                this.showSuggestions = false;
+            }, 200);
         },
 
         // Edit Item

@@ -159,6 +159,7 @@ func main() {
 	// Offline data API
 	app.Get("/api/data", handlers.GetAllData)
 	app.Get("/api/item/:id/version", handlers.GetItemVersion)
+	app.Get("/api/suggestions", handlers.GetSuggestions)
 
 	// Batch operations
 	app.Post("/sections/batch-delete", handlers.BatchDeleteSections)

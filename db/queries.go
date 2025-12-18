@@ -1,6 +1,8 @@
 package db
 
 import (
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -451,4 +453,191 @@ func DeleteSections(ids []int64) error {
 	}
 
 	return tx.Commit()
+}
+
+// ==================== ITEM HISTORY (Auto-completion) ====================
+
+type ItemSuggestion struct {
+	Name          string `json:"name"`
+	LastSectionID int64  `json:"last_section_id"`
+	UsageCount    int    `json:"usage_count"`
+}
+
+// SaveItemHistory saves or updates item name in history for auto-completion
+func SaveItemHistory(name string, sectionID int64) error {
+	_, err := DB.Exec(`
+		INSERT INTO item_history (name, last_section_id, usage_count, last_used_at)
+		VALUES (?, ?, 1, strftime('%s', 'now'))
+		ON CONFLICT(name COLLATE NOCASE) DO UPDATE SET
+			last_section_id = excluded.last_section_id,
+			usage_count = usage_count + 1,
+			last_used_at = strftime('%s', 'now')
+	`, name, sectionID)
+	return err
+}
+
+// levenshteinDistance calculates the edit distance between two strings
+func levenshteinDistance(s1, s2 string) int {
+	s1 = strings.ToLower(s1)
+	s2 = strings.ToLower(s2)
+
+	if len(s1) == 0 {
+		return len(s2)
+	}
+	if len(s2) == 0 {
+		return len(s1)
+	}
+
+	// Create matrix
+	matrix := make([][]int, len(s1)+1)
+	for i := range matrix {
+		matrix[i] = make([]int, len(s2)+1)
+		matrix[i][0] = i
+	}
+	for j := range matrix[0] {
+		matrix[0][j] = j
+	}
+
+	// Fill matrix
+	for i := 1; i <= len(s1); i++ {
+		for j := 1; j <= len(s2); j++ {
+			cost := 1
+			if s1[i-1] == s2[j-1] {
+				cost = 0
+			}
+			matrix[i][j] = min(
+				matrix[i-1][j]+1,      // deletion
+				matrix[i][j-1]+1,      // insertion
+				matrix[i-1][j-1]+cost, // substitution
+			)
+		}
+	}
+
+	return matrix[len(s1)][len(s2)]
+}
+
+// scoreSuggestion calculates a match score (higher is better)
+func scoreSuggestion(name, query string) int {
+	nameLower := strings.ToLower(name)
+	queryLower := strings.ToLower(query)
+
+	// Exact match: highest score
+	if nameLower == queryLower {
+		return 1000
+	}
+
+	// Prefix match: high score
+	if strings.HasPrefix(nameLower, queryLower) {
+		return 500
+	}
+
+	// Contains match: medium score
+	if strings.Contains(nameLower, queryLower) {
+		return 200
+	}
+
+	// Fuzzy match: score based on Levenshtein distance
+	// Only consider if query is at least 3 chars and distance is reasonable
+	if len(query) >= 3 {
+		distance := levenshteinDistance(nameLower, queryLower)
+		maxDistance := len(query) / 2 // Allow ~50% typos
+
+		if distance <= maxDistance {
+			return 100 - distance*20 // Lower score for more typos
+		}
+
+		// Also check if any word in the name fuzzy matches
+		words := strings.Fields(nameLower)
+		for _, word := range words {
+			wordDist := levenshteinDistance(word, queryLower)
+			if wordDist <= maxDistance {
+				return 80 - wordDist*15
+			}
+		}
+	}
+
+	return 0 // No match
+}
+
+// GetItemSuggestions returns item name suggestions matching the query with fuzzy matching
+func GetItemSuggestions(query string, limit int) ([]ItemSuggestion, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	// Fetch more items to allow for fuzzy matching and scoring
+	rows, err := DB.Query(`
+		SELECT name, COALESCE(last_section_id, 0), usage_count
+		FROM item_history
+		ORDER BY usage_count DESC, last_used_at DESC
+		LIMIT 200
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	type scoredSuggestion struct {
+		suggestion ItemSuggestion
+		score      int
+	}
+
+	var scored []scoredSuggestion
+	for rows.Next() {
+		var s ItemSuggestion
+		if err := rows.Scan(&s.Name, &s.LastSectionID, &s.UsageCount); err != nil {
+			return nil, err
+		}
+
+		score := scoreSuggestion(s.Name, query)
+		if score > 0 {
+			// Boost score slightly by usage count
+			score += s.UsageCount / 10
+			scored = append(scored, scoredSuggestion{s, score})
+		}
+	}
+
+	// Sort by score (descending), then by usage_count (descending)
+	sort.Slice(scored, func(i, j int) bool {
+		if scored[i].score != scored[j].score {
+			return scored[i].score > scored[j].score
+		}
+		return scored[i].suggestion.UsageCount > scored[j].suggestion.UsageCount
+	})
+
+	// Return top results
+	var suggestions []ItemSuggestion
+	for i := 0; i < len(scored) && i < limit; i++ {
+		suggestions = append(suggestions, scored[i].suggestion)
+	}
+
+	return suggestions, nil
+}
+
+// GetAllItemSuggestions returns all item suggestions for offline cache
+func GetAllItemSuggestions(limit int) ([]ItemSuggestion, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	rows, err := DB.Query(`
+		SELECT name, COALESCE(last_section_id, 0), usage_count
+		FROM item_history
+		ORDER BY usage_count DESC, last_used_at DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var suggestions []ItemSuggestion
+	for rows.Next() {
+		var s ItemSuggestion
+		if err := rows.Scan(&s.Name, &s.LastSectionID, &s.UsageCount); err != nil {
+			return nil, err
+		}
+		suggestions = append(suggestions, s)
+	}
+	return suggestions, nil
 }

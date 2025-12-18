@@ -28,6 +28,9 @@ func CreateItem(c *fiber.Ctx) error {
 		return c.Status(500).SendString("Failed to create item")
 	}
 
+	// Save to item history for auto-completion
+	db.SaveItemHistory(name, sectionID)
+
 	// Broadcast to WebSocket clients
 	BroadcastUpdate("item_created", item)
 
