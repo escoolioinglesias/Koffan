@@ -1460,16 +1460,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Haptic feedback for item toggle
-    document.body.addEventListener('htmx:beforeRequest', function(event) {
-        const path = event.detail.path || event.detail.elt?.getAttribute('hx-post');
-        if (path && path.match(/\/items\/\d+\/toggle/)) {
-            if ('vibrate' in navigator) {
-                navigator.vibrate(15);
-            }
-        }
-    });
-
     document.body.addEventListener('htmx:beforeSwap', function(event) {
         const redirectUrl = event.detail.xhr.getResponseHeader('HX-Redirect');
         if (redirectUrl) {
