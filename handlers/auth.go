@@ -25,6 +25,10 @@ func getAppPassword() string {
 	return pass
 }
 
+func isAuthDisabled() bool {
+	return os.Getenv("DISABLE_AUTH") == "true"
+}
+
 // isSecureConnection checks if the request came over HTTPS
 // Works both directly and behind reverse proxies
 func isSecureConnection(c *fiber.Ctx) bool {
@@ -125,6 +129,10 @@ func Logout(c *fiber.Ctx) error {
 
 // AuthMiddleware checks if user is authenticated
 func AuthMiddleware(c *fiber.Ctx) error {
+	if isAuthDisabled() {
+		return c.Next()
+	}
+
 	// Skip auth for login page and static files
 	path := c.Path()
 	if path == "/login" || path == "/static" || len(path) > 7 && path[:8] == "/static/" {

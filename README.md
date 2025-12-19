@@ -121,6 +121,7 @@ docker-compose up -d
 |----------|---------|-------------|
 | `APP_ENV` | `development` | Set to `production` for secure cookies |
 | `APP_PASSWORD` | `shopping123` | Login password |
+| `DISABLE_AUTH` | `false` | Set to `true` to disable authentication (for reverse proxy setups) |
 | `PORT` | `80` (Docker) / `3000` (local) | Server port |
 | `DB_PATH` | `./shopping.db` | Database file path |
 | `DEFAULT_LANG` | `en` | Default UI language (pl, en, de, es, fr, pt) |
