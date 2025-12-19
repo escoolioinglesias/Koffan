@@ -17,7 +17,7 @@
     "logout": "Abmelden"
   },
   "list": {
-    "title": "Einkaufsliste",
+    "title": "Koffan Einkaufsliste",
     "empty_list": "leere Liste",
     "shopping_list": "Einkaufsliste",
     "completed": "erledigt",
@@ -63,7 +63,7 @@
     "delete_completed_description": "Entfernt alle als gekauft markierten Artikel aus der Einkaufsliste."
   },
   "login": {
-    "title": "Anmeldung - Einkaufsliste",
+    "title": "Anmeldung - Koffan",
     "subtitle": "Melden Sie sich an, um fortzufahren",
     "password": "Passwort",
     "password_placeholder": "Passwort eingeben...",

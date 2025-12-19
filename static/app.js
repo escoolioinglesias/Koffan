@@ -1747,7 +1747,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.body.addEventListener('htmx:afterSwap', function(event) {
         // Restore correct page title after swap (prevents HTMX from resetting to hardcoded title)
-        document.title = window.translations[window.currentLang]?.list?.title || 'Koffan';
+        document.title = window.translations[window.currentLang]?.list?.title || 'Koffan Shopping List';
 
         // Animate only new items after swap
         if (event.detail.target?.id === 'sections-list') {
@@ -1764,7 +1764,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Also restore title after any HTMX request completes (belt and suspenders approach)
     document.body.addEventListener('htmx:afterRequest', function(event) {
-        document.title = window.translations[window.currentLang]?.list?.title || 'Koffan';
+        document.title = window.translations[window.currentLang]?.list?.title || 'Koffan Shopping List';
     });
 
 });

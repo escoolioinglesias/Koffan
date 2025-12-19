@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Koffan</title>
+    <title>Koffan Shopping List</title>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/static/favicon-96.png" sizes="96x96">
@@ -29,7 +29,7 @@
                 window.currentLang = window.defaultLang;
             }
             // Set page title based on language
-            document.title = window.translations[window.currentLang]?.list?.title || 'Koffan';
+            document.title = window.translations[window.currentLang]?.list?.title || 'Koffan Shopping List';
             // Also set html lang attribute
             document.documentElement.lang = window.currentLang;
         })();

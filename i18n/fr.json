@@ -17,7 +17,7 @@
     "logout": "Déconnexion"
   },
   "list": {
-    "title": "Liste de courses",
+    "title": "Koffan Liste de courses",
     "empty_list": "liste vide",
     "shopping_list": "Liste de courses",
     "completed": "terminé",
@@ -63,7 +63,7 @@
     "delete_completed_description": "Supprime tous les articles marqués comme achetés de la liste."
   },
   "login": {
-    "title": "Connexion - Liste de courses",
+    "title": "Connexion - Koffan",
     "subtitle": "Connectez-vous pour continuer",
     "password": "Mot de passe",
     "password_placeholder": "Entrez le mot de passe...",

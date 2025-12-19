@@ -17,7 +17,7 @@
     "logout": "Wyloguj"
   },
   "list": {
-    "title": "Lista Zakupów",
+    "title": "Koffan Lista Zakupów",
     "empty_list": "pusta lista",
     "shopping_list": "Lista zakupów",
     "completed": "gotowe",
@@ -63,7 +63,7 @@
     "delete_completed_description": "Usuwa wszystkie przedmioty oznaczone jako kupione z listy zakupów."
   },
   "login": {
-    "title": "Logowanie - Lista Zakupów",
+    "title": "Logowanie - Koffan",
     "subtitle": "Zaloguj się aby kontynuować",
     "password": "Hasło",
     "password_placeholder": "Wpisz hasło...",

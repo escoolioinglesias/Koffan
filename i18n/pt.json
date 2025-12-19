@@ -17,7 +17,7 @@
     "logout": "Terminar sessão"
   },
   "list": {
-    "title": "Lista de compras",
+    "title": "Koffan Lista de compras",
     "empty_list": "lista vazia",
     "shopping_list": "Lista de compras",
     "completed": "concluído",
@@ -63,7 +63,7 @@
     "delete_completed_description": "Remove todos os itens marcados como comprados da lista."
   },
   "login": {
-    "title": "Iniciar sessão - Lista de compras",
+    "title": "Iniciar sessão - Koffan",
     "subtitle": "Inicie sessão para continuar",
     "password": "Palavra-passe",
     "password_placeholder": "Introduza a palavra-passe...",

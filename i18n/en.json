@@ -17,7 +17,7 @@
     "logout": "Log out"
   },
   "list": {
-    "title": "Shopping List",
+    "title": "Koffan Shopping List",
     "empty_list": "empty list",
     "shopping_list": "Shopping list",
     "completed": "done",
@@ -63,7 +63,7 @@
     "delete_completed_description": "Removes all items marked as bought from the shopping list."
   },
   "login": {
-    "title": "Login - Shopping List",
+    "title": "Login - Koffan",
     "subtitle": "Log in to continue",
     "password": "Password",
     "password_placeholder": "Enter password...",
