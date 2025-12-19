@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lista Zakupow</title>
+    <title>Koffan</title>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/static/favicon-96.png" sizes="96x96">
@@ -11,7 +11,8 @@
     <link rel="icon" href="/static/favicon.ico" sizes="48x48">
     <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
     <link rel="manifest" href="/static/manifest.json">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#ec4899">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- i18n translations -->
     <script>
@@ -28,7 +29,9 @@
                 window.currentLang = window.defaultLang;
             }
             // Set page title based on language
-            document.title = window.translations[window.currentLang]?.list?.title || 'Shopping List';
+            document.title = window.translations[window.currentLang]?.list?.title || 'Koffan';
+            // Also set html lang attribute
+            document.documentElement.lang = window.currentLang;
         })();
 
         // Translation helper function
@@ -70,7 +73,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#3b82f6',
+                        primary: '#ec4899',
                         uncertain: '#fef3c7',
                     }
                 }

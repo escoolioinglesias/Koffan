@@ -1,10 +1,10 @@
 {{define "login"}}
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Logowanie - Lista Zakupow</title>
+    <title id="page-title">Login - Koffan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
 
@@ -22,6 +22,8 @@
             } else {
                 window.currentLang = window.defaultLang;
             }
+            // Set html lang attribute
+            document.documentElement.lang = window.currentLang;
         })();
 
         // Translation helper function
