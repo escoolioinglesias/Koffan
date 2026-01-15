@@ -278,6 +278,24 @@ func GetListStats(listID int64) Stats {
 	return stats
 }
 
+// RestartList resets the completed status of all items in a list
+func RestartList(listID int64) error {
+	_, err := DB.Exec(`
+		UPDATE items 
+		SET completed = FALSE, updated_at = strftime('%s', 'now') 
+		WHERE section_id IN (
+			SELECT id FROM sections WHERE list_id = ?
+		)
+	`, listID)
+	
+	if err == nil {
+		// Update list updated_at timestamp
+		DB.Exec(`UPDATE lists SET updated_at = strftime('%s', 'now') WHERE id = ?`, listID)
+	}
+	
+	return err
+}
+
 // ==================== SECTIONS ====================
 
 func GetAllSections() ([]Section, error) {

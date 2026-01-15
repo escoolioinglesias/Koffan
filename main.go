@@ -155,6 +155,7 @@ func main() {
 	app.Put("/lists/:id", handlers.UpdateList)
 	app.Delete("/lists/:id", handlers.DeleteList)
 	app.Post("/lists/:id/activate", handlers.SetActiveList)
+	app.Post("/lists/:id/restart", handlers.RestartList)
 	app.Post("/lists/:id/move-up", handlers.MoveListUp)
 	app.Post("/lists/:id/move-down", handlers.MoveListDown)
 

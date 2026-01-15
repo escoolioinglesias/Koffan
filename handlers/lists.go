@@ -159,6 +159,46 @@ func UpdateList(c *fiber.Ctx) error {
 	}, "")
 }
 
+// RestartList restarts a shopping list (unchecks all items)
+func RestartList(c *fiber.Ctx) error {
+	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(400).SendString("Invalid ID")
+	}
+
+	err = db.RestartList(id)
+	if err != nil {
+		return c.Status(500).SendString("Failed to restart list")
+	}
+
+	// Get updated list for broadcast and return
+	list, _ := db.GetListByID(id)
+
+	// Broadcast to WebSocket clients
+	BroadcastUpdate("list_updated", list)
+
+	// Also broadcast items update to refresh the list view if active
+	BroadcastUpdate("items_updated", nil)
+
+	// If HTMX request from list page settings, we might want to refresh the page
+	// or return a success toast/notification.
+	// If from list item (main page), we return the updated list item.
+
+	if c.Get("HX-Target") == "list-"+c.Params("id") || contains(c.Get("HX-Current-URL"), "/lists") {
+		return c.Render("partials/list_item", fiber.Map{
+			"List": list,
+		}, "")
+	}
+
+	// If we are on the single list view
+	if !contains(c.Get("HX-Current-URL"), "/lists") && contains(c.Get("HX-Current-URL"), "/lists/") {
+		c.Set("HX-Refresh", "true")
+		return c.SendString("")
+	}
+
+	return c.SendString("")
+}
+
 // DeleteList deletes a shopping list
 func DeleteList(c *fiber.Ctx) error {
 	id, err := strconv.ParseInt(c.Params("id"), 10, 64)

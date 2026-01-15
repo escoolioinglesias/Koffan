@@ -75,7 +75,8 @@
     "use_first_section": "Use first section",
     "use_first_section_desc": "If section doesn't exist, add to first available",
     "auto_create_section": "Auto-create section",
-    "auto_create_section_desc": "If section doesn't exist, create a new one with the same name"
+    "auto_create_section_desc": "If section doesn't exist, create a new one with the same name",
+    "restart_list": "Restart list"
   },
   "login": {
     "title": "Login - Koffan",
